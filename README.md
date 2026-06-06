@@ -13,7 +13,7 @@
 
 - **学科覆盖**：从生物医学扩展到**全科目**（理化、计算机、社科、人文、数学）
 - **检测体系**：从"耿同学六式"扩展为**三层级检测框架**
-- **可执行工具**：内置 3 个 Python 脚本（Benford's Law、统计验证、图片相似度）
+- **可执行工具**：内置 **8 个 Python 脚本**（统计验证、图片检测、LLM检测、DOI验证、撤稿检查、效应量、单图克隆等）
 - **报告输出**：结构化风险评估报告 + 证据链
 
 学术造假**不是某个学科的专利**——抄袭、捏造、统计操纵、引用造假这些手段**跨学科通用**，只是具体表现形式不同。本技能让 AI 学会识别这些**通用模式**，无论论文来自哪个领域。
@@ -294,6 +294,16 @@ python scripts/image_similarity.py --paper-dir ./figures/ --threshold 10
 - 两张相同内容的 PNG → 判 IDENTICAL
 - 三张图混合扫描 → 正确识别唯一一对重复
 
+### 其它 5 个脚本
+
+| 脚本 | 用途 | 关键命令 |
+|------|------|---------|
+| `effect_size_check.py` | 检验报告的效应量是否与检验统计量一致；识别不合理大效应 | `python effect_size_check.py --test t --n 30 --stat 3.5 --reported-d 0.8` |
+| `doi_check.py` | 通过 Crossref API 验证 DOI 是否真实存在（检测 LLM 编造的虚假引用） | `python doi_check.py --doi "10.1038/nature12373"` |
+| `llm_detect.py` | 启发式 LLM 写作检测（句长方差、双词熵、hapax比、虚词密度等） | `python llm_detect.py --text paper.txt` |
+| `retraction_check.py` | 检查引用是否在撤稿数据库中（先 `--download` 一次） | `python retraction_check.py --doi 10.xxxx/yyyy` |
+| `image_clone.py` | **单张图内**的克隆区域检测（滑窗感知哈希） | `python image_clone.py --image fig1.png --window 32 --threshold 5` |
+
 详细统计方法见 [`references/statistical_checks.md`](./references/statistical_checks.md)。
 
 ---
@@ -305,7 +315,7 @@ python scripts/image_similarity.py --paper-dir ./figures/ --threshold 10
 | **学科覆盖** | 仅生物医学 | **全科目**（6 大领域） |
 | **检测框架** | 耿同学六式 | **三层级检测**（通用→专项→综合） |
 | **图片检测** | 仅 Western blot | **通用感知哈希** + 学科专项图检 |
-| **可执行脚本** | 无 | **3 个 Python 脚本**（Benford/统计/图片） |
+| **可执行脚本** | 无 | **8 个 Python 脚本**（统计/图片/LLM/DOI/撤稿/效应量/克隆） |
 | **统计验证** | 基础 | **深度**（p值一致性、自由度、样本量、效应量） |
 | **报告模板** | 无固定格式 | **结构化报告**（风险评分+证据表+建议） |
 | **参考深度** | 无 | **两份参考文件**（学科指南+统计方法） |
@@ -381,6 +391,15 @@ MIT License — 见 [LICENSE](./LICENSE) 文件。
 ---
 
 ## 📝 版本
+
+**v1.1.0** (2026-06-06) — 工具集大幅扩充到 8 个脚本
+
+- ✨ 新增 `effect_size_check.py` — 检验报告效应量与检验统计量一致性
+- ✨ 新增 `doi_check.py` — 调 Crossref API 验证 DOI 真实性
+- ✨ 新增 `llm_detect.py` — 启发式 LLM 写作检测
+- ✨ 新增 `retraction_check.py` — 撤稿数据库检查
+- ✨ 新增 `image_clone.py` — 单图内克隆区域检测
+- 全部新脚本已亲测通过
 
 **v1.0.1** (2026-06-06) — 脚本兼容性修复
 
