@@ -66,7 +66,7 @@
 ### 通过 npx 安装（推荐）
 
 ```bash
-npx skills add https://github.com/wooly99/geng-academic-fraud-detector
+npx skills add https://github.com/jiapenger00-debug/geng-ScholarGuard-UniVerse
 ```
 
 ### 手动安装（Claude Code）
