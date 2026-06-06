@@ -1,0 +1,46 @@
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.eggs/
+.pytest_cache/
+.coverage
+htmlcov/
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv
+
+# Test outputs
+test_output/
+test_results/
+*.log
+benford_plot.png
+
+# Distribution / packaging
+build/
+dist/
+*.skill
+
+# Environment
+.env
+.env.local
