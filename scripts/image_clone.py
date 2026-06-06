@@ -89,11 +89,25 @@ def hamming_distance(hash1: str, hash2: str) -> int:
 
 # ----- Sliding window scan -----
 
-def scan_for_clones(image_path: str, window: int = 32, stride: int = 16, threshold: int = 5):
+def region_std(img, x: int, y: int, w: int, h: int) -> float:
+    """Standard deviation of pixel values in a region. Used to skip blank/uniform regions."""
+    crop = img.crop((x, y, x + w, y + h)).convert("L")
+    pixels = list(crop.getdata())
+    if not pixels:
+        return 0.0
+    m = sum(pixels) / len(pixels)
+    var = sum((p - m) ** 2 for p in pixels) / len(pixels)
+    return var ** 0.5
+
+
+def scan_for_clones(image_path: str, window: int = 32, stride: int = 16, threshold: int = 5, min_std: float = 15.0):
     """
     Slide a window of size (window x window) over the image with given stride.
     For each position, compute a perceptual hash.
     Find pairs of positions whose hashes differ by <= threshold.
+
+    min_std: regions with stdev < this value are treated as blank/uniform and
+             excluded from the clone search. Default 15.0 works for typical figures.
     """
     if not PIL_AVAILABLE:
         return {"error": "Pillow not installed. Install with: pip install Pillow"}
@@ -107,13 +121,19 @@ def scan_for_clones(image_path: str, window: int = 32, stride: int = 16, thresho
     if w < window * 2 or h < window * 2:
         return {"error": f"Image too small ({w}x{h}) for window size {window}. Need at least {window*2}x{window*2}."}
 
-    print(f"  Scanning {w}x{h} image with {window}x{window} window, stride {stride}...")
+    print(f"  Scanning {w}x{h} image with {window}x{window} window, stride {stride}, min_std={min_std}...")
 
     positions = []
     hashes = []
+    skipped_blank = 0
     for y in range(0, h - window + 1, stride):
         for x in range(0, w - window + 1, stride):
             try:
+                # Skip blank/uniform regions (common in PDF margins, page backgrounds)
+                std = region_std(img, x, y, window, window)
+                if std < min_std:
+                    skipped_blank += 1
+                    continue
                 h_val = region_phash(img, x, y, window, window)
                 positions.append((x, y))
                 hashes.append(h_val)
@@ -121,10 +141,10 @@ def scan_for_clones(image_path: str, window: int = 32, stride: int = 16, thresho
                 continue
 
     if not positions:
-        return {"error": "No valid positions scanned"}
+        return {"error": "No valid positions scanned (all regions too uniform?)"}
 
     n = len(positions)
-    print(f"  Computed {n} region hashes. Comparing pairs...")
+    print(f"  Computed {n} region hashes ({skipped_blank} blank regions skipped). Comparing pairs...")
 
     # Find near-duplicate regions
     clones = []
@@ -155,7 +175,9 @@ def scan_for_clones(image_path: str, window: int = 32, stride: int = 16, thresho
         "window": window,
         "stride": stride,
         "threshold": threshold,
+        "min_std": min_std,
         "n_regions_scanned": n,
+        "n_regions_skipped_blank": skipped_blank,
         "n_clones_found": len(clones),
         "clones": clones,
     }
@@ -209,10 +231,11 @@ def main():
     parser.add_argument("--window", type=int, default=32, help="Window size in pixels (default 32)")
     parser.add_argument("--stride", type=int, default=16, help="Sliding window stride (default 16)")
     parser.add_argument("--threshold", type=int, default=5, help="Hamming distance threshold (default 5, lower = stricter)")
+    parser.add_argument("--min-std", type=float, default=15.0, help="Min pixel stdev to consider a region (default 15, skip blanks)")
     args = parser.parse_args()
 
     if args.image:
-        result = scan_for_clones(args.image, args.window, args.stride, args.threshold)
+        result = scan_for_clones(args.image, args.window, args.stride, args.threshold, args.min_std)
         print(format_report(result))
     elif args.paper_dir:
         if not os.path.isdir(args.paper_dir):
@@ -234,7 +257,7 @@ def main():
         total_clones = 0
         for img_path in images:
             print(f"--- {os.path.basename(img_path)} ---")
-            result = scan_for_clones(img_path, args.window, args.stride, args.threshold)
+            result = scan_for_clones(img_path, args.window, args.stride, args.threshold, args.min_std)
             print(format_report(result))
             print()
             if "n_clones_found" in result:
