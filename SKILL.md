@@ -412,20 +412,24 @@ ALWAYS use this exact report template:
 
 ## Tools & Scripts
 
-The `scripts/` directory contains helper tools for automated checks. Use them when available; implement inline when they're not.
+The `scripts/` directory contains helper tools for automated checks. **All scripts have pure-Python fallbacks** — no third-party dependencies are required, though `scipy`, `Pillow`, and `matplotlib` improve accuracy and capabilities when installed.
 
-| Script | Purpose | When to Use |
-|--------|---------|-------------|
-| `scripts/benford.py` | Benford's Law analysis | Numerical data spanning multiple orders of magnitude |
-| `scripts/image_similarity.py` | Perceptual hash comparison | Detecting duplicated/rotated images |
-| `scripts/stat_check.py` | p-value, t-test, F-test verification | Verifying reported statistics |
-| `scripts/ref_check.py` | DOI/reference existence check | Batch-verifying reference list |
+| Script | Purpose | Required Deps | Optional Deps |
+|--------|---------|---------------|---------------|
+| `scripts/benford.py` | Benford's Law analysis | None (pure Python) | `scipy` (precision), `matplotlib` (plot) |
+| `scripts/image_similarity.py` | Perceptual hash comparison | None (MD5 fallback) | `Pillow` (rotation/crop detection) |
+| `scripts/stat_check.py` | p-value, t-test, F-test verification | None (pure Python) | `scipy` (precision) |
 
-To use a script:
+To use a script (use `python` not `python3` — works on Windows, macOS, Linux):
 ```bash
-python3 {{SKILL_DIR}}/scripts/benford.py --input data.csv --column "values"
-python3 {{SKILL_DIR}}/scripts/stat_check.py --test t --df 28 --stat 2.5 --p 0.001
-python3 {{SKILL_DIR}}/scripts/image_similarity.py --paper-dir ./figures/
+python {{SKILL_DIR}}/scripts/benford.py --input data.csv --column "values"
+python {{SKILL_DIR}}/scripts/stat_check.py --test t --df 28 --stat 2.5 --p 0.001
+python {{SKILL_DIR}}/scripts/image_similarity.py --paper-dir ./figures/
+```
+
+On Windows, use `py` instead of `python` if `python` is not on PATH:
+```bash
+py scripts\benford.py --numbers "123,456,789,1024,2048,4096"
 ```
 
 When a script is not available, implement the check inline using Python with standard libraries (`scipy.stats`, `PIL`, `numpy`). Document what you implement.

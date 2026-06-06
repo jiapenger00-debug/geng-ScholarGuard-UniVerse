@@ -203,6 +203,23 @@ cp -r academic-fraud-detector .claude/skills/
 
 ## 🛠 工具脚本使用
 
+### 前置要求
+
+**Python 3.7+** 是必需的。脚本**不需要**任何第三方依赖——所有统计函数都用纯 Python 实现（chi-square、t、F 分布都有内置 fallback）。可选加速：
+
+```bash
+# 可选：让统计计算更精确
+pip install scipy
+
+# 可选：让图片对比支持旋转/裁剪检测（默认 MD5 fallback 只能检测完全相同的图）
+pip install Pillow
+
+# 可选：让 benford 生成图表
+pip install matplotlib
+```
+
+**Windows 用户注意**：命令里用 `python` 而不是 `python3`（Windows 上 `python3` 经常走 Microsoft Store shim）。如果都没装好，先装 Python 3：https://www.python.org/downloads/
+
 ### Benford's Law 检测
 
 ```bash
@@ -210,7 +227,7 @@ cp -r academic-fraud-detector .claude/skills/
 python scripts/benford.py --input data.csv --column "values"
 
 # 直接传数字
-python scripts/benford.py --numbers "123,456,789,1024,2048,4096"
+python scripts/benford.py --numbers "123,456,789,1024,2048,4096,8192,16384,32768,65536,131072,262144,524288"
 
 # 生成图表（需 matplotlib）
 python scripts/benford.py --input data.csv --column "values" --plot
@@ -222,11 +239,16 @@ python scripts/benford.py --input data.csv --column "values" --plot
 - 无固定上下界（不是百分比）✓
 - 至少 50 个数据点 ✓
 
+**实测验证**（已亲测）：
+- 11 个数据 → 报 "Insufficient data, need at least 50"（优雅退出）
+- 100 个 `random.uniform(1, 100000)` → 报"显著偏离 Benford"（正确）
+- 200 个 `random.expovariate(0.5) * 100`（指数分布应符合 Benford）→ 报"一致"（正确）
+
 ### 统计量验证
 
 ```bash
 # t 检验
-python scripts/stat_check.py --test t --df 28 --stat 2.5 --p 0.001
+python scripts/stat_check.py --test t --df 28 --stat 2.5 --p 0.019
 
 # F 检验（ANOVA）
 python scripts/stat_check.py --test F --df1 2 --df2 45 --stat 5.3 --p 0.008
@@ -242,6 +264,12 @@ python scripts/stat_check.py --test r --n 100 --stat 0.35 --p 0.0004
 - p = 0.000（不可能）
 - p < 0 或 p > 1（数学上不可能）
 - 报告 p 与计算的 p 差距 > 0.05（很可能是编造的）
+
+**实测验证**（已亲测）：
+- t(28)=2.5, p=0.019 → 判 OK（实际 p=0.018551，匹配）
+- t(28)=2.5, p=0.001 → 判 MODERATE 异常（差 0.018，编造）
+- F(2,45)=5.3, p=0.008 → 判 OK（实际 p=0.008572，匹配）
+- r(98)=0.35, p=0.0004 → 判 OK（实际 p=0.000358，匹配）
 
 ### 图片相似度扫描
 
@@ -261,6 +289,10 @@ python scripts/image_similarity.py --paper-dir ./figures/ --threshold 10
 - ≤ 5 = 高度相似（可能仅做了亮度/对比度调整）
 - ≤ 15 = 相似（红旗）
 - > 15 = 不同
+
+**实测验证**（已亲测，无 Pillow 的纯 MD5 fallback 模式）：
+- 两张相同内容的 PNG → 判 IDENTICAL
+- 三张图混合扫描 → 正确识别唯一一对重复
 
 详细统计方法见 [`references/statistical_checks.md`](./references/statistical_checks.md)。
 
@@ -349,6 +381,15 @@ MIT License — 见 [LICENSE](./LICENSE) 文件。
 ---
 
 ## 📝 版本
+
+**v1.0.1** (2026-06-06) — 脚本兼容性修复
+
+- ✅ 修复 Windows GBK 控制台 emoji 崩溃（所有脚本加 `_safe_emoji` fallback）
+- ✅ 修复 `scipy` 缺失时脚本崩溃（所有统计函数加纯 Python 实现：t/F/chi2/beta 分布）
+- ✅ 修复 `Pillow` 缺失时图片脚本崩溃（MD5 fallback）
+- ✅ 修复 `python3` 在 Windows 上的 shim 问题（README 命令改用 `python`，并加 `py` 备选）
+- ✅ 亲测所有脚本的典型用例（结果在 README 列出）
+- ✅ npx skills add 已亲测可用（Vercel Labs `skills` v1.5.10）
 
 **v1.0.0** (2026-06-06) — 首次发布
 
