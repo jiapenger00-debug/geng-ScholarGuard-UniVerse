@@ -1,0 +1,21 @@
+# Academic Fraud Detector — Requirements
+#
+# All 12 scripts run with NO third-party dependencies using pure Python stdlib.
+# The packages below are OPTIONAL and provide enhanced functionality.
+#
+# Install everything (recommended):
+#   pip install -r requirements.txt
+#
+# Install only what you need:
+#   pip install Pillow     # image_clone.py, exif_inspect.py
+#   pip install scipy      # higher-precision stat_check.py, benford.py, normality_test.py
+#   pip install matplotlib # benford.py --plot
+
+# Image analysis
+Pillow>=10.0.0
+
+# Statistical precision
+scipy>=1.10.0
+
+# Plotting
+matplotlib>=3.5.0
